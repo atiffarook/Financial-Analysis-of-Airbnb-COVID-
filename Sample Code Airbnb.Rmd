@@ -1,0 +1,206 @@
+---
+title: "Airbnb Project - San Fransico"
+author: "Atif Farook"
+date: "8/4/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(tidyverse)
+month_4_2019 <-  read.csv("listings_sanfransico_july2019.csv") 
+month_4_2020 <-  read.csv("listings_sanfransico_july2020.csv")
+
+month_3_2019 <- read.csv("listings_sanfransico_june2019.csv")
+month_3_2020 <- read.csv("listings_sanfransico_june2020.csv")
+
+month_2_2019 <-  read.csv("listings_sanfransico_may2019.csv")
+month_2_2020 <-  read.csv("listings_sanfransico_may2020.csv")
+
+month_1_2019 <- read.csv("listings_sanfransico_april2019.csv")
+month_1_2020 <- read.csv("listings_sanfransico_april2020.csv")
+
+```
+
+
+```{r, warning=FALSE}
+# selecting the columns I want to use 
+
+
+##July 
+month_1_2019 <- month_1_2019 %>% 
+  select(id, host_id, host_since, host_is_superhost,
+         host_listings_count, host_total_listings_count, 
+         price, availability_30, availability_60,
+         availability_90, availability_365) %>% 
+  mutate(month = "April2019")
+
+month_1_2020 <- month_1_2020 %>% 
+  select(id, host_id, host_since, host_is_superhost,
+         host_listings_count, host_total_listings_count, 
+         price, availability_30, availability_60, 
+         availability_90, availability_365) %>% 
+  mutate(month = "April2020")
+
+## June 
+month_2_2019 <- month_2_2019 %>% 
+  select(id, host_id, host_since, host_is_superhost, 
+         host_listings_count, host_total_listings_count, 
+         price, availability_30, availability_60, 
+         availability_90, availability_365) %>% 
+  mutate(month = "May2019")
+
+month_2_2020 <-month_2_2020 %>% 
+  select(id, host_id, host_since, host_is_superhost, 
+         host_listings_count, host_total_listings_count, 
+         price, availability_30, availability_60, 
+         availability_90, availability_365) %>% 
+  mutate(month = "May2020")
+
+## May
+month_3_2019 <- month_3_2019 %>% 
+  select(id, host_id, host_since, host_is_superhost, host_listings_count, 
+         host_total_listings_count, price, availability_30, availability_60, 
+         availability_90, availability_365) %>% 
+  mutate(month = "June2019")
+
+month_3_2020 <- month_3_2020 %>% 
+  select(id, host_id, host_since, host_is_superhost, 
+         host_listings_count, host_total_listings_count, 
+         price, availability_30, availability_60, 
+         availability_90, availability_365) %>% 
+  mutate(month = "June2020")
+
+##April
+month_4_2019 <- month_4_2019 %>% 
+  select(id, host_id, host_since, host_is_superhost, 
+         host_listings_count, host_total_listings_count, 
+         price, availability_30, availability_60, 
+         availability_90, availability_365) %>% 
+  mutate(month = "July2019")
+
+month_4_2020 <- month_4_2020 %>% 
+  select(id, host_id, host_since, host_is_superhost, 
+         host_listings_count, host_total_listings_count, 
+         price, availability_30, availability_60, 
+         availability_90, availability_365) %>% 
+  mutate(month = "July2020")
+
+df_all_months <- list(month_1_2019, month_2_2019, month_3_2019, 
+                      month_4_2019,month_1_2020, month_2_2020,  
+                      month_3_2020, month_4_2020)
+
+## All data sets merged by year 
+df_2019 <- bind_rows(df_all_months[1:4])
+df_2020<- bind_rows(df_all_months[5:8])
+
+```
+
+```{r}
+## Total listings by month and year
+num_listing <- numeric(length = 8)
+temp<- numeric(length = 2)
+
+for(i in 1:length(df_all_months)){
+  temp <- dim(df_all_months[[i]])
+  num_listing[i] <- temp[1]
+}
+
+total_listing_2019  <- num_listing[1:4]
+total_listing_2020  <- num_listing[5:8]
+
+names(total_listing_2019) <- c("Month 1", "Month 2", "Month 3", "Month 4")
+names(total_listing_2020) <- c("Month 1", "Month 2", "Month 3", "Month 4")
+
+adj_total_listing_2019 <- round(1.10*total_listing_2019)
+
+upper <- max(total_listing_2019, total_listing_2020, adj_total_listing_2019) + 1200
+lower <- min(total_listing_2019, total_listing_2020, adj_total_listing_2019) - 500 
+## plot of total listing
+
+plot(total_listing_2020, ylim = c(lower, upper), type = "l", 
+     ylab = "Number of listings", xlab = "Month", col = "lightblue", 
+     xaxt = "n")
+axis(1, at = 1:4, labels = c("April", "May", "June", "July"))
+points(c(1,2,3,4), total_listing_2019, type = "l", col = "maroon")
+points(c(1,2,3,4), adj_total_listing_2019, type = "l", 
+       col = "orange", lty = 2)
+legend(3.4, upper, legend = c(2019,"2020 (adj)", 2020), 
+       fill = c("maroon", "orange", "lightblue"), cex = 0.8)
+abline( v = c(1:4), lty = 2, lwd = 0.5)
+```
+
+
+```{r}
+
+vacant_30_2019 <- numeric(0)
+vacant_30_2020 <- numeric(0)
+vacant_90_2019 <- numeric(0)
+vacant_90_2020 <- numeric(0)
+for(i in 1:4){
+  vacant_30_2019[i] <- sum(df_all_months[[i]]$availability_30==0) 
+  vacant_30_2020[i] <- sum(df_all_months[[i+4]]$availability_30==0) 
+  vacant_90_2019[i] <- sum(df_all_months[[i]]$availability_90==0)
+  vacant_90_2020[i] <- sum(df_all_months[[i+4]]$availability_90==0)
+}
+
+## names(vacant_30_2019) <- c("Month 1", "Month 2", "Month 3", "Month 4")
+## names(vacant_30_2020) <- c("Month 1", "Month 2", "Month 3", "Month 4")
+names(vacant_90_2019) <- c("April", "May", "June", "July")
+names(vacant_90_2020) <- c("April", "May", "June", "July")
+
+## vacant_30_2019
+## vacant_30_2020
+vacant_90_2019
+vacant_90_2020
+
+Month <- rep(c("April", "May", "June", "July"), 2)
+Year <- c(rep("2k19", 4), rep("2k20", 4))
+Vacancies <- c(vacant_90_2019, vacant_90_2020)
+data <- data.frame(Month, Year, Vacancies)
+data$Month <- factor(data$Month, levels = c("April", "May", "June", "July"))
+
+ggplot(data, aes(fill = Year, y = Vacancies, x = Month)) + 
+  geom_bar(position = "dodge", stat = "identity") + 
+  coord_flip()
+
+```
+
+```{r}
+##cleaning the price 
+df_2019$price <- gsub("[[:punct:]]", "", df_2019$price)
+df_2020$price <- gsub("[[:punct:]]", "", df_2020$price)
+df_2019$price <- as.numeric(df_2019$price)/100
+df_2020$price <- as.numeric(df_2020$price)/100
+```
+
+```{r}
+money_2019 <- df_2019 %>% 
+  group_by(month) %>% 
+  select(month, price, availability_30, availability_90) %>%
+  summarise_each(funs = mean) %>%
+  mutate(money_30 = price*1.25*(30-availability_30), 
+         money_90 = price*1.25*(90-availability_90))
+
+money_2020 <- df_2020 %>% 
+  group_by(month) %>% 
+  select(month, price, availability_30, availability_90) %>%
+  summarise_each(funs = mean) %>%
+  mutate(money_30 = price*(30-availability_30), 
+         money_90 = price*(90-availability_90))
+
+money_2019
+money_2020
+
+revenue_change <- matrix((money_2020$money_30 - money_2019$money_30)/money_2019$money_30, 
+                         1, 4)
+rownames(revenue_change) <- "% change"
+colnames(revenue_change) <- c("April", "July", "June", "May")
+
+total_loss <- sum((money_2020$money_30 - money_2019$money_30))*(dim(df_2020)[1]/4)
+names(total_loss) <- "Revenue Change April-July"
+revenue_change
+total_loss
+
+```
